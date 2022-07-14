@@ -250,23 +250,29 @@ CMD=$(docker inspect --format='{{json .Config.Cmd}}' $image | shell_escape)
 ENTRYPOINT=$(docker inspect --format='{{json .Config.Entrypoint}}' $image | shell_escape)
 
 echo '#!/bin/sh' > $build_sandbox/.singularity.d/runscript
+echo '#!/bin/sh' > $build_sandbox/.singularity.d/startscript
 
 # Take working directory into account
 WORKINGDIR=$(docker inspect --format='{{json .Config.WorkingDir}}' $image)
 if [[ $WORKINGDIR != '""' ]]; then
     echo cd $WORKINGDIR >> $build_sandbox/.singularity.d/runscript
+    echo cd $WORKINGDIR >> $build_sandbox/.singularity.d/startscript
 fi
 
 # First preference goes to both entrypoint / cmd, then individual
 if [ -n "$ENTRYPOINT" ] && [ -n "$CMD" ]; then
     echo exec "$ENTRYPOINT" "$CMD" '"$@"' >> $build_sandbox/.singularity.d/runscript;
+    echo exec "$ENTRYPOINT" "$CMD" '"$@"' >> $build_sandbox/.singularity.d/startscript;
 elif [ -n "$ENTRYPOINT" ]; then
     echo exec "$ENTRYPOINT" '"$@"' >> $build_sandbox/.singularity.d/runscript;
+    echo exec "$ENTRYPOINT" '"$@"' >> $build_sandbox/.singularity.d/startscript;
 elif [ -n "$CMD" ]; then
     echo exec "$CMD" '"$@"' >> $build_sandbox/.singularity.d/runscript;
+    echo exec "$CMD" '"$@"' >> $build_sandbox/.singularity.d/startscript;
 fi
 
 chmod +x $build_sandbox/.singularity.d/runscript;
+chmod +x $build_sandbox/.singularity.d/startscript;
 
 ################################################################################
 ### SINGULARITY ENVIRONMENT ####################################################
